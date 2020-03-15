@@ -1,122 +1,118 @@
 public Action Command_Team(int client, int args)
 {
-	char[] usage = "usage: sm_team <target> (<team_name>|<team_index>)";
+	char[] usage = "usage: sm_team <target> <team name/index>";
 
-	if (args)
+	char sArgString[192];
+	GetCmdArgString(sArgString, sizeof(sArgString));
+	
+	ArrayList hArgs = lolo_Args_Split(sArgString);
+	
+	if (hArgs != null)
 	{
-		char sArgs[192];
-		GetCmdArgString(sArgs, sizeof(sArgs));
+		int args_count = hArgs.Length;
+		char[][] sArgs = new char[args_count][192];
 
-		if (StrContains(sArgs, " ", false) != -1)
+		for (int i; i < args_count; i++)
 		{
-			char sArg[2][64];
-			ExplodeString(sArgs, " ", sArg, sizeof(sArg), sizeof(sArg[]), true);
+			hArgs.GetString(i, sArgs[i], 192);
+		}
 
-			if (strlen(sArg[0]))
+		lolo_CloseHandle(hArgs);
+
+		if (args_count == 2)
+		{
+			ArrayList hTargets = lolo_Target_Process(client, sArgs[0]);
+			int size = hTargets.Length;
+
+			if (size)
 			{
-				ArrayList hTargets = lolo_Target_Process(client, sArg[0]);
+				int team = GetTeamIndex(sArgs[1]);
+				char sTeam[16];
+				bool team_valid;
 
-				if (hTargets != null)
+				if (team != -1)
 				{
-					int size = hTargets.Length;
+					team_valid = true;
+					GetTeamNameShort(team, sTeam, sizeof(sTeam));
+				}
 
-					if (size)
+				if (team_valid)
+				{
+					char sAdminName[32];
+
+					if (client)
 					{
-						int team = -1;
-						char sTeam[16];
+						GetClientName(client, sAdminName, sizeof(sAdminName));
+					}
+					else
+					{
+						sAdminName = CONSOLE_NAME;
+					}
 
-						bool team_valid;
+					char sName[32];
 
-						if (strlen(sArg[1]))
+					bool target_valid;
+
+					for (int i; i < size; i++)
+					{
+						int target = hTargets.Get(i);
+
+						if (GetClientTeam(target) != team)
 						{
-							team = GetTeamIndex(sArg[1]);
-						}
+							target_valid = true;
+							
+							GetClientName(target, sName, sizeof(sName));
 
-						if (team != -1)
-						{
-							team_valid = true;
-							GetTeamNameShort(team, sTeam, sizeof(sTeam));
-						}
-
-						if (team_valid)
-						{
-							char sAdminName[32];
+							MoveToTeam(target, team);
 
 							if (client)
 							{
-								GetClientName(client, sAdminName, sizeof(sAdminName));
+								QPrintToChat(client, "%s %sMoved %s%s %sto %s%s", 	CHAT_SM, CHAT_SUCCESS, 
+																					CHAT_VALUE, sName, CHAT_SUCCESS, 
+																					CHAT_VALUE, sTeam);
+
+								QPrintToChatAllExcept(client, "%s %s%s %smoved %s%s %sto %s%s", 	CHAT_SM, 
+																								CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																								CHAT_VALUE, sName, CHAT_SUCCESS, 
+																								CHAT_VALUE, sTeam);
 							}
 							else
 							{
-								sAdminName = CONSOLE_NAME;
+								PrintToServer("%s Moved %s to %s", CONSOLE_SM, sName, sTeam);
+
+								QPrintToChatAll("%s %s%s %smoved %s%s %s to %s%s", 	CHAT_SM, 
+																					CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																					CHAT_VALUE, sName, CHAT_SUCCESS, 
+																					CHAT_VALUE, sTeam);
 							}
-
-							char sName[32];
-
-							bool target_valid;
-
-							for (int i; i < size; i++)
-							{
-								int target = hTargets.Get(i);
-
-								if (GetClientTeam(target) != team)
-								{
-									target_valid = true;
-									
-									GetClientName(target, sName, sizeof(sName));
-
-									MoveToTeam(target, team);
-
-									if (client)
-									{
-										PrintToChat(client, "%s %sMoved %s%s %sto %s%s", 	CHAT_SM, CHAT_SUCCESS, 
-																							CHAT_VALUE, sName, CHAT_SUCCESS, 
-																							CHAT_VALUE, sTeam);
-
-										PrintToChatExcept(client, "%s %s%s %smoved %s%s %sto %s%s", 	CHAT_SM, 
-																										CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																										CHAT_VALUE, sName, CHAT_SUCCESS, 
-																										CHAT_VALUE, sTeam);
-									}
-									else
-									{
-										PrintToServer("%s Moved %s to %s", CONSOLE_SM, sName, sTeam);
-
-										PrintToChatAll("%s %s%s %smoved %s%s %s to %s%s", 	CHAT_SM, 
-																							CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																							CHAT_VALUE, sName, CHAT_SUCCESS, 
-																							CHAT_VALUE, sTeam);
-									}
-								}
-							}
-
-							if (!target_valid)
-							{
-								if (client) PrintToChat(client, "%s %sInvalid target to apply action.", CHAT_SM, CHAT_ERROR);
-								else PrintToServer("%s Invaid target to apply action.", CONSOLE_SM);
-							}
-
-							return Plugin_Handled;
-						}
-						else
-						{
-							if (client) PrintToChat(client, "%s %sInvalid team.", CHAT_SM, CHAT_ERROR);
-							else PrintToServer("%s Invalid team.", CONSOLE_SM);
-
-							return Plugin_Handled;
 						}
 					}
+
+					if (!target_valid)
+					{
+						if (client) QPrintToChat(client, "%s %sInvalid target to apply action.", CHAT_SM, CHAT_ERROR);
+						else PrintToServer("%s Invaid target to apply action.", CONSOLE_SM);
+					}
+
+					return Plugin_Handled;
 				}
+				else
+				{
+					if (client) QPrintToChat(client, "%s %sInvalid team.", CHAT_SM, CHAT_ERROR);
+					else PrintToServer("%s Invalid team.", CONSOLE_SM);
 
-				if (client) PrintToChat(client, "%s %sInvalid target.", CHAT_SM, CHAT_ERROR);
-				else PrintToServer("%s Invalid target.", CONSOLE_SM);
-
-				return Plugin_Handled;
+					return Plugin_Handled;
+				}
 			}
+
+			if (client) QPrintToChat(client, "%s %sInvalid target.", CHAT_SM, CHAT_ERROR);
+			else PrintToServer("%s Invalid target.", CONSOLE_SM);
+
+			return Plugin_Handled;
 		}
 	}
 
-	if (client) PrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
+	if (client) QPrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
 	else PrintToServer("%s %s", CONSOLE_SM, usage);
 
 	return Plugin_Handled;

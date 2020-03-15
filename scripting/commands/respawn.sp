@@ -2,84 +2,92 @@ public Action Command_Respawn(int client, int args)
 {
 	char[] usage = "usage: sm_respawn <target>";
 
-	if (args)
+	char sArgString[192];
+	GetCmdArgString(sArgString, sizeof(sArgString));
+	
+	ArrayList hArgs = lolo_Args_Split(sArgString);
+	
+	if (hArgs != null)
 	{
-		char sArgs[192];
-		GetCmdArgString(sArgs, sizeof(sArgs));
+		int args_count = hArgs.Length;
+		char[][] sArgs = new char[args_count][192];
 
-		if (strlen(sArgs))
+		for (int i; i < args_count; i++)
 		{
-			ArrayList hTargets = lolo_Target_Process(client, sArgs);
+			hArgs.GetString(i, sArgs[i], 192);
+		}
 
-			if (hTargets != null)
+		lolo_CloseHandle(hArgs);
+
+		if (args_count == 1)
+		{
+			ArrayList hTargets = lolo_Target_Process(client, sArgs[0]);
+			int size = hTargets.Length;
+
+			if (size)
 			{
-				int size = hTargets.Length;
+				bool target_valid;
 
-				if (size)
+				char sAdminName[32];
+
+				if (client)
 				{
-					bool target_valid;
+					GetClientName(client, sAdminName, sizeof(sAdminName));
+				}
+				else
+				{
+					sAdminName = CONSOLE_NAME;
+				}
 
-					char sAdminName[32];
+				char sName[32];
 
-					if (client)
+				for (int i; i < size; i++)
+				{
+					int target = hTargets.Get(i);
+
+					if (GetClientTeam(target) > 1)
 					{
-						GetClientName(client, sAdminName, sizeof(sAdminName));
-					}
-					else
-					{
-						sAdminName = CONSOLE_NAME;
-					}
+						GetClientName(target, sName, sizeof(sName));
 
-					char sName[32];
+						CS_RespawnPlayer(target);
+						target_valid = true;
 
-					for (int i; i < size; i++)
-					{
-						int target = hTargets.Get(i);
-
-						if (GetClientTeam(target) > 1)
+						if (client)
 						{
-							GetClientName(target, sName, sizeof(sName));
+							QPrintToChat(client, "%s %sRespawned %s%s", CHAT_SM, CHAT_SUCCESS, CHAT_VALUE, sName);
 
-							CS_RespawnPlayer(target);
-							target_valid = true;
+							QPrintToChatAllExcept(client, "%s %s%s %respawned %s%s", 	CHAT_SM, 
+																					CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																					CHAT_VALUE, sName, CHAT_SUCCESS);
+						}
+						else
+						{
+							PrintToServer("%s Respawned %s", CONSOLE_SM, sName);
 
-							if (client)
-							{
-								PrintToChat(client, "%s %sRespawned %s%s", CHAT_SM, CHAT_SUCCESS, CHAT_VALUE, sName);
-
-								PrintToChatExcept(client, "%s %s%s %respawned %s%s", 	CHAT_SM, 
-																						CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																						CHAT_VALUE, sName, CHAT_SUCCESS);
-							}
-							else
-							{
-								PrintToServer("%s Respawned %s", CONSOLE_SM, sName);
-
-								PrintToChatAll("%s %s%s %srespawned %s%s", 	CHAT_SM, 
-																			CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																			CHAT_VALUE, sName, CHAT_SUCCESS);
-							}
+							QPrintToChatAll("%s %s%s %srespawned %s%s", 	CHAT_SM, 
+																		CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																		CHAT_VALUE, sName, CHAT_SUCCESS);
 						}
 					}
-
-					if (!target_valid)
-					{
-						if (client) PrintToChat(client, "%s %sInvalid target to apply action.", CHAT_SM, CHAT_ERROR);
-						else PrintToServer("%s Invaid target to apply action.", CONSOLE_SM);
-					}
-
-					return Plugin_Handled;
 				}
+
+				if (!target_valid)
+				{
+					if (client) QPrintToChat(client, "%s %sInvalid target to apply action.", CHAT_SM, CHAT_ERROR);
+					else PrintToServer("%s Invaid target to apply action.", CONSOLE_SM);
+				}
+
+				return Plugin_Handled;
 			}
 
-			if (client) PrintToChat(client, "%s %sInvalid target.", CHAT_SM, CHAT_ERROR);
+			if (client) QPrintToChat(client, "%s %sInvalid target.", CHAT_SM, CHAT_ERROR);
 			else PrintToServer("%s Invalid target.", CONSOLE_SM);
 
 			return Plugin_Handled;
 		}
 	}
 
-	if (client) PrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
+	if (client) QPrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
 	else PrintToServer("%s %s", CONSOLE_SM, usage);
 
 	return Plugin_Handled;

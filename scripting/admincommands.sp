@@ -13,6 +13,7 @@ INCLUDES
 #include <cstrike>
 #include <sdktools>
 #include <lololib>
+#include <printqueue>
 
 /*
 PLUGIN INFO
@@ -104,23 +105,6 @@ public void OnPluginStart()
 /*
 COMMANDS
 */
-
-stock void PrintToChatExcept(int client, const char[] sFormat, any ...)
-{
-	char sMessage[252];
-	VFormat(sMessage, sizeof(sMessage), sFormat, 3);
-
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		if (i != client)
-		{
-			if (lolo_IsClientValid(i))
-			{
-				PrintToChat(i, sMessage);
-			}
-		}
-	}
-}
 
 #if defined INCLUDE_TEAM
 #include "commands/team.sp"

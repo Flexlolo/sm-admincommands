@@ -13,7 +13,7 @@ public Action Command_RRR(int client, int args)
 
 		if (time <= 0)
 		{
-			if (client) PrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
+			if (client) QPrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
 			else PrintToServer("%s %s", CONSOLE_SM, usage);
 
 			return Plugin_Handled;
@@ -28,9 +28,9 @@ public Action Command_RRR(int client, int args)
 	{
 		GetClientName(client, sAdminName, sizeof(sAdminName));
 
-		PrintToChat(client, "%s %sInitialized round restart in %s%d %ssec", CHAT_SM, CHAT_SUCCESS, CHAT_VALUE, time, CHAT_SUCCESS);
+		QPrintToChat(client, "%s %sInitialized round restart in %s%d %ssec", CHAT_SM, CHAT_SUCCESS, CHAT_VALUE, time, CHAT_SUCCESS);
 
-		PrintToChatExcept(client, "%s %s%s %sinitialized round restart in %s%d %ssec", 	CHAT_SM, 
+		QPrintToChatAllExcept(client, "%s %s%s %sinitialized round restart in %s%d %ssec", 	CHAT_SM, 
 																						CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
 																						CHAT_VALUE, time, CHAT_SUCCESS);
 	}
@@ -40,7 +40,7 @@ public Action Command_RRR(int client, int args)
 
 		PrintToServer("%s Initialized round restart in %d sec", CONSOLE_SM, time);
 
-		PrintToChatAll("%s %s%s %sinitialized round restart in %s%d %ssec", CHAT_SM, 
+		QPrintToChatAll("%s %s%s %sinitialized round restart in %s%d %ssec", CHAT_SM, 
 																			CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
 																			CHAT_VALUE, time, CHAT_SUCCESS);
 	}

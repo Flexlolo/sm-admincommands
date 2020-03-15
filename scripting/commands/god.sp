@@ -1,139 +1,142 @@
 public Action Command_God(int client, int args)
 {
-	char[] usage = "usage: sm_god <target> [<on>|<off>]";
+	char[] usage = "usage: sm_god <target> [<on/off>]";
 	
-	if (args)
+	char sArgString[192];
+	GetCmdArgString(sArgString, sizeof(sArgString));
+	
+	ArrayList hArgs = lolo_Args_Split(sArgString);
+	
+	if (hArgs != null)
 	{
-		char sArgs[192];
-		GetCmdArgString(sArgs, sizeof(sArgs));
+		int args_count = hArgs.Length;
+		char[][] sArgs = new char[args_count][192];
 
-		char sArg[2][64];
-		ExplodeString(sArgs, " ", sArg, sizeof(sArg), sizeof(sArg[]), true);
-
-		if (strlen(sArg[0]))
+		for (int i; i < args_count; i++)
 		{
-			ArrayList hTargets = lolo_Target_Process(client, sArg[0]);
+			hArgs.GetString(i, sArgs[i], 192);
+		}
 
-			if (hTargets != null)
+		lolo_CloseHandle(hArgs);
+
+		if (args_count == 1 || args_count == 2)
+		{
+			ArrayList hTargets = lolo_Target_Process(client, sArgs[0]);
+			int size = hTargets.Length;
+
+			if (size)
 			{
-				int size = hTargets.Length;
+				bool toggle = true;
+				bool action;
 
-				if (size)
+				if (args_count == 2)
 				{
-					bool toggle = true;
-					bool action;
-
-					if (strlen(sArg[1]))
+					if (StrEqual(sArgs[1], "1", true) || StrEqual(sArgs[1], "on", true))
 					{
-						if (StrEqual(sArg[1], "1", true) || StrEqual(sArg[1], "on", true))
+						toggle = false;
+						action = true;
+					}
+					else if (StrEqual(sArgs[1], "0", true) || StrEqual(sArgs[1], "off", true))
+					{
+						toggle = false;
+					}
+				}
+
+				bool target_valid;
+
+				char sAdminName[32];
+
+				if (client)
+				{
+					GetClientName(client, sAdminName, sizeof(sAdminName));
+				}
+				else
+				{
+					sAdminName = CONSOLE_NAME;
+				}
+
+				char sName[32];
+
+				for (int i; i < size; i++)
+				{
+					int target = hTargets.Get(i);
+
+					if (IsPlayerAlive(target))
+					{
+						GetClientName(target, sName, sizeof(sName));
+
+						bool god_current = lolo_GetClientGod(target);
+						bool god = action;
+
+						if (toggle)
 						{
-							toggle = false;
-							action = true;
+							god = !lolo_GetClientGod(target);
 						}
-						else if (StrEqual(sArg[1], "0", true) || StrEqual(sArg[1], "off", true))
+
+						if (god_current != god)
 						{
-							toggle = false;
-						}
-					}
+							lolo_SetClientGod(target, god);
+							target_valid = true;
 
-					bool target_valid;
-
-					char sAdminName[32];
-
-					if (client)
-					{
-						GetClientName(client, sAdminName, sizeof(sAdminName));
-					}
-					else
-					{
-						sAdminName = CONSOLE_NAME;
-					}
-
-					char sName[32];
-
-					for (int i; i < size; i++)
-					{
-						int target = hTargets.Get(i);
-
-						if (IsPlayerAlive(target))
-						{
-							GetClientName(target, sName, sizeof(sName));
-
-							bool god_current = lolo_GetClientGod(target);
-							bool god = action;
-
-							if (toggle)
+							if (god)
 							{
-								god = !lolo_GetClientGod(target);
-							}
-
-							//PrintToChatAll("%d %d", god_current, god);
-
-							if (god_current != god)
-							{
-								lolo_SetClientGod(target, god);
-								target_valid = true;
-
-								if (god)
+								if (client)
 								{
-									if (client)
-									{
-										PrintToChat(client, "%s %sEnabled godmode for %s%s", CHAT_SM, CHAT_SUCCESS, CHAT_VALUE, sName);
+									QPrintToChat(client, "%s %sEnabled godmode for %s%s", CHAT_SM, CHAT_SUCCESS, CHAT_VALUE, sName);
 
-										PrintToChatExcept(client, "%s %s%s %senabled godmode for %s%s", 	CHAT_SM, 
-																											CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																											CHAT_VALUE, sName, CHAT_SUCCESS);
-									}
-									else
-									{
-										PrintToServer("%s Enabled godmode for %s", CONSOLE_SM, sName);
-
-										PrintToChatAll("%s %s%s %senabled godmode for %s%s", 	CHAT_SM, 
-																								CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																								CHAT_VALUE, sName, CHAT_SUCCESS);
-									}
+									QPrintToChatAllExcept(client, "%s %s%s %senabled godmode for %s%s", 	CHAT_SM, 
+																										CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																										CHAT_VALUE, sName, CHAT_SUCCESS);
 								}
 								else
 								{
-									if (client)
-									{
-										PrintToChat(client, "%s %sDisabled godmode for %s%s", CHAT_SM, CHAT_SUCCESS, CHAT_VALUE, sName);
+									PrintToServer("%s Enabled godmode for %s", CONSOLE_SM, sName);
 
-										PrintToChatExcept(client, "%s %s%s %sdisabled godmode for %s%s", 	CHAT_SM, 
-																											CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																											CHAT_VALUE, sName, CHAT_SUCCESS);
-									}
-									else
-									{
-										PrintToServer("%s Disabled godmode for %s", CONSOLE_SM, sName);
+									QPrintToChatAll("%s %s%s %senabled godmode for %s%s", 	CHAT_SM, 
+																							CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																							CHAT_VALUE, sName, CHAT_SUCCESS);
+								}
+							}
+							else
+							{
+								if (client)
+								{
+									QPrintToChat(client, "%s %sDisabled godmode for %s%s", CHAT_SM, CHAT_SUCCESS, CHAT_VALUE, sName);
 
-										PrintToChatAll("%s %s%s %sdisabled godmode for %s%s", 	CHAT_SM, 
-																								CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																								CHAT_VALUE, sName, CHAT_SUCCESS);
-									}
+									QPrintToChatAllExcept(client, "%s %s%s %sdisabled godmode for %s%s", 	CHAT_SM, 
+																										CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																										CHAT_VALUE, sName, CHAT_SUCCESS);
+								}
+								else
+								{
+									PrintToServer("%s Disabled godmode for %s", CONSOLE_SM, sName);
+
+									QPrintToChatAll("%s %s%s %sdisabled godmode for %s%s", 	CHAT_SM, 
+																							CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																							CHAT_VALUE, sName, CHAT_SUCCESS);
 								}
 							}
 						}
 					}
-
-					if (!target_valid)
-					{
-						if (client) PrintToChat(client, "%s %sInvalid target to apply action.", CHAT_SM, CHAT_ERROR);
-						else PrintToServer("%s Invaid target to apply action.", CONSOLE_SM);
-					}
-
-					return Plugin_Handled;
 				}
+
+				if (!target_valid)
+				{
+					if (client) QPrintToChat(client, "%s %sInvalid target to apply action.", CHAT_SM, CHAT_ERROR);
+					else PrintToServer("%s Invaid target to apply action.", CONSOLE_SM);
+				}
+
+				return Plugin_Handled;
 			}
 
-			if (client) PrintToChat(client, "%s %sInvalid target.", CHAT_SM, CHAT_ERROR);
+			if (client) QPrintToChat(client, "%s %sInvalid target.", CHAT_SM, CHAT_ERROR);
 			else PrintToServer("%s Invalid target.", CONSOLE_SM);
 
 			return Plugin_Handled;
 		}
 	}
 
-	if (client) PrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
+	if (client) QPrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
 	else PrintToServer("%s %s", CONSOLE_SM, usage);
 
 	return Plugin_Handled;

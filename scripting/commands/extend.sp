@@ -14,7 +14,7 @@ public Action Command_Extend(int client, int args)
 
 	if (time <= 0.0)
 	{
-		if (client) PrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
+		if (client) QPrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
 		else PrintToServer("%s %s", CONSOLE_SM, usage);
 
 		return Plugin_Handled;
@@ -28,11 +28,11 @@ public Action Command_Extend(int client, int args)
 	{
 		GetClientName(client, sAdminName, sizeof(sAdminName));
 
-		PrintToChat(client, "%s %sExtended map for %s%.1f %smin.", CHAT_SM, CHAT_SUCCESS, CHAT_VALUE, time, CHAT_SUCCESS);
+		QPrintToChat(client, "%s %sExtended map for %s%.1f %smin.", CHAT_SM, CHAT_SUCCESS, CHAT_VALUE, time, CHAT_SUCCESS);
 
-		PrintToChatExcept(client, "%s %s%s %sextended map for %s%.1f %smin.", 	CHAT_SM, 
-																				CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																				CHAT_VALUE, time, CHAT_SUCCESS);
+		QPrintToChatAllExcept(client, "%s %s%s %sextended map for %s%.1f %smin.", 	CHAT_SM, 
+																					CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																					CHAT_VALUE, time, CHAT_SUCCESS);
 	}
 	else
 	{
@@ -40,7 +40,7 @@ public Action Command_Extend(int client, int args)
 
 		PrintToServer("%s Extended map for %.1f min.", CONSOLE_SM, time);
 
-		PrintToChatAll("%s %s%s %sextended map for %s%.1f %smin.", 	CHAT_SM, 
+		QPrintToChatAll("%s %s%s %sextended map for %s%.1f %smin.", CHAT_SM, 
 																	CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
 																	CHAT_VALUE, time, CHAT_SUCCESS);
 	}

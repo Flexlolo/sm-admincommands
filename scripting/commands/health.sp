@@ -2,189 +2,184 @@ public Action Command_Health(int client, int args)
 {
 	char[] usage = "usage: sm_hp <target> (<health>|<+/-health>)";
 
-	if (args)
+	char sArgString[192];
+	GetCmdArgString(sArgString, sizeof(sArgString));
+	
+	ArrayList hArgs = lolo_Args_Split(sArgString);
+	
+	if (hArgs != null)
 	{
-		char sArgs[192];
-		GetCmdArgString(sArgs, sizeof(sArgs));
+		int args_count = hArgs.Length;
+		char[][] sArgs = new char[args_count][192];
 
-		if (StrContains(sArgs, " ", false) != -1)
+		for (int i; i < args_count; i++)
 		{
-			char sArg[2][64];
-			ExplodeString(sArgs, " ", sArg, sizeof(sArg), sizeof(sArg[]), true);
+			hArgs.GetString(i, sArgs[i], 192);
+		}
 
-			if (strlen(sArg[0]))
+		lolo_CloseHandle(hArgs);
+
+		if (args_count == 2)
+		{
+			ArrayList hTargets = lolo_Target_Process(client, sArgs[0]);
+			int size = hTargets.Length;
+
+			if (size)
 			{
-				ArrayList hTargets = lolo_Target_Process(client, sArg[0]);
+				int health = StringToInt(sArgs[1]);
+				bool health_set;
+				bool health_valid;
 
-				if (hTargets != null)
+				if (sArgs[1][0] != '+' && sArgs[1][0] != '-')
 				{
-					int size = hTargets.Length;
+					health_set = true;
+				}
 
-					if (size)
+				if (health != 0)
+				{
+					if (!(health_set && health < 0))
 					{
-						int health;
-						bool health_set;
-						bool health_valid;
+						health_valid = true;
+					}
+				}
 
-						if (strlen(sArg[1]))
+				if (health_valid)
+				{
+					bool target_valid;
+
+					char sAdminName[32];
+
+					if (client)
+					{
+						GetClientName(client, sAdminName, sizeof(sAdminName));
+					}
+					else
+					{
+						sAdminName = CONSOLE_NAME;
+					}
+
+					char sName[32];
+
+					for (int i; i < size; i++)
+					{
+						int target = hTargets.Get(i);
+
+						if (IsPlayerAlive(target))
 						{
-							health = StringToInt(sArg[1]);
+							GetClientName(target, sName, sizeof(sName));
 
-							if (sArg[1][0] != '+' && sArg[1][0] != '-')
+							if (health_set)
 							{
-								health_set = true;
-							}
-						}
+								lolo_SetClientHealth(target, health);
+								target_valid = true;
 
-						if (health != 0)
-						{
-							if (!(health_set && health < 0))
-							{
-								health_valid = true;
-							}
-						}
+								if (client)
+								{
+									QPrintToChat(client, "%s %sSet %s%s %shp to %s%d", 	CHAT_SM, CHAT_SUCCESS, 
+																						CHAT_VALUE, sName, CHAT_SUCCESS, 
+																						CHAT_VALUE, health);
 
-						//PrintToChatAll("%s | %d %d %d", sArg[1], health, health_set, health_valid);
+									QPrintToChatAllExcept(client, "%s %s%s %sset %s%s %shp to %s%d", 	CHAT_SM, 
+																									CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																									CHAT_VALUE, sName, CHAT_SUCCESS, 
+																									CHAT_VALUE, health);
+								}
+								else
+								{
+									PrintToServer("%s Set %s hp to %d", CONSOLE_SM, sName, health);
 
-						if (health_valid)
-						{
-							bool target_valid;
-
-							char sAdminName[32];
-
-							if (client)
-							{
-								GetClientName(client, sAdminName, sizeof(sAdminName));
+									QPrintToChatAll("%s %s%s %sset %s%s %shp to %s%d", 	CHAT_SM, 
+																						CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																						CHAT_VALUE, sName, CHAT_SUCCESS, 
+																						CHAT_VALUE, health);
+								}
 							}
 							else
 							{
-								sAdminName = CONSOLE_NAME;
-							}
+								int target_health = GetClientHealth(target);
+								int health_result = target_health + health;
 
-							char sName[32];
-
-							for (int i; i < size; i++)
-							{
-								int target = hTargets.Get(i);
-
-								if (IsPlayerAlive(target))
+								if (health_result > 0)
 								{
-									GetClientName(target, sName, sizeof(sName));
+									lolo_SetClientHealth(target, health_result);
+									target_valid = true;
 
-									if (health_set)
+									if (health > 0)
 									{
-										lolo_SetClientHealth(target, health);
-										target_valid = true;
-
 										if (client)
 										{
-											PrintToChat(client, "%s %sSet %s%s %shp to %s%d", 	CHAT_SM, CHAT_SUCCESS, 
-																								CHAT_VALUE, sName, CHAT_SUCCESS, 
-																								CHAT_VALUE, health);
+											QPrintToChat(client, "%s %sAdded %s%d %shp to %s%s", 	CHAT_SM, CHAT_SUCCESS, 
+																									CHAT_VALUE, health, CHAT_SUCCESS, 
+																									CHAT_VALUE, sName);
 
-											PrintToChatExcept(client, "%s %s%s %sset %s%s %shp to %s%d", 	CHAT_SM, 
+											QPrintToChatAllExcept(client, "%s %s%s %sadded %s%d %shp to %s%s", 	CHAT_SM, 
 																											CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																											CHAT_VALUE, sName, CHAT_SUCCESS, 
-																											CHAT_VALUE, health);
+																											CHAT_VALUE, health, CHAT_SUCCESS, 
+																											CHAT_VALUE, sName);
 										}
 										else
 										{
-											PrintToServer("%s Set %s hp to %d", CONSOLE_SM, sName, health);
+											PrintToServer("%s Added %d hp to %s", CONSOLE_SM, health, sName);
 
-											PrintToChatAll("%s %s%s %sset %s%s %shp to %s%d", 	CHAT_SM, 
-																								CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																								CHAT_VALUE, sName, CHAT_SUCCESS, 
-																								CHAT_VALUE, health);
+											QPrintToChatAll("%s %s%s %sadded %s%d %shp to %s%s", 	CHAT_SM, 
+																									CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																									CHAT_VALUE, health, CHAT_SUCCESS, 
+																									CHAT_VALUE, sName);
 										}
 									}
 									else
 									{
-										int target_health = GetClientHealth(target);
-										int health_result = target_health + health;
-
-										if (health_result > 0)
+										if (client)
 										{
-											lolo_SetClientHealth(target, health_result);
-											target_valid = true;
+											QPrintToChat(client, "%s %sRemoved %s%d %shp from %s%s", 	CHAT_SM, CHAT_SUCCESS, 
+																										CHAT_VALUE, -health, CHAT_SUCCESS, 
+																										CHAT_VALUE, sName);
 
-											if (health > 0)
-											{
-												if (client)
-												{
-													PrintToChat(client, "%s %sAdded %s%d %shp to %s%s", 	CHAT_SM, CHAT_SUCCESS, 
-																											CHAT_VALUE, health, CHAT_SUCCESS, 
-																											CHAT_VALUE, sName);
-
-													PrintToChatExcept(client, "%s %s%s %sadded %s%d %shp to %s%s", 	CHAT_SM, 
-																													CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																													CHAT_VALUE, health, CHAT_SUCCESS, 
-																													CHAT_VALUE, sName);
-												}
-												else
-												{
-													PrintToServer("%s Added %d hp to %s", CONSOLE_SM, health, sName);
-
-													PrintToChatAll("%s %s%s %sadded %s%d %shp to %s%s", 	CHAT_SM, 
-																											CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																											CHAT_VALUE, health, CHAT_SUCCESS, 
-																											CHAT_VALUE, sName);
-												}
-											}
-											else
-											{
-												if (client)
-												{
-													PrintToChat(client, "%s %sRemoved %s%d %shp from %s%s", 	CHAT_SM, CHAT_SUCCESS, 
+											QPrintToChatAllExcept(client, "%s %s%s %sremoved %s%d %shp from %s%s", 	CHAT_SM, 
+																												CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
 																												CHAT_VALUE, -health, CHAT_SUCCESS, 
 																												CHAT_VALUE, sName);
+										}
+										else
+										{
+											PrintToServer("%s Removed %d hp from %s", CONSOLE_SM, health, sName);
 
-													PrintToChatExcept(client, "%s %s%s %sremoved %s%d %shp from %s%s", 	CHAT_SM, 
-																														CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																														CHAT_VALUE, -health, CHAT_SUCCESS, 
-																														CHAT_VALUE, sName);
-												}
-												else
-												{
-													PrintToServer("%s Removed %d hp from %s", CONSOLE_SM, health, sName);
-
-													PrintToChatAll("%s %s%s %sremoved %s%d %shp from %s%s", CHAT_SM, 
-																											CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																											CHAT_VALUE, -health, CHAT_SUCCESS, 
-																											CHAT_VALUE, sName);
-												}
-											}
+											QPrintToChatAll("%s %s%s %sremoved %s%d %shp from %s%s", CHAT_SM, 
+																									CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+																									CHAT_VALUE, -health, CHAT_SUCCESS, 
+																									CHAT_VALUE, sName);
 										}
 									}
 								}
 							}
-
-							if (!target_valid)
-							{
-								if (client) PrintToChat(client, "%s %sInvalid target to apply action.", CHAT_SM, CHAT_ERROR);
-								else PrintToServer("%s Invaid target to apply action.", CONSOLE_SM);
-							}
-
-							return Plugin_Handled;
-						}
-						else
-						{
-							if (client) PrintToChat(client, "%s %sInvalid health value.", CHAT_SM, CHAT_ERROR);
-							else PrintToServer("%s Invalid health value.", CONSOLE_SM);
-
-							return Plugin_Handled;
 						}
 					}
+
+					if (!target_valid)
+					{
+						if (client) QPrintToChat(client, "%s %sInvalid target to apply action.", CHAT_SM, CHAT_ERROR);
+						else PrintToServer("%s Invaid target to apply action.", CONSOLE_SM);
+					}
+
+					return Plugin_Handled;
 				}
+				else
+				{
+					if (client) QPrintToChat(client, "%s %sInvalid health value.", CHAT_SM, CHAT_ERROR);
+					else PrintToServer("%s Invalid health value.", CONSOLE_SM);
 
-				if (client) PrintToChat(client, "%s %sInvalid target.", CHAT_SM, CHAT_ERROR);
-				else PrintToServer("%s Invalid target.", CONSOLE_SM);
-
-				return Plugin_Handled;
+					return Plugin_Handled;
+				}
 			}
+
+			if (client) QPrintToChat(client, "%s %sInvalid target.", CHAT_SM, CHAT_ERROR);
+			else PrintToServer("%s Invalid target.", CONSOLE_SM);
+
+			return Plugin_Handled;
 		}
 	}
 
-	if (client) PrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
+	if (client) QPrintToChat(client, "%s %s%s", CHAT_SM, CHAT_ERROR, usage);
 	else PrintToServer("%s %s", CONSOLE_SM, usage);
 
 	return Plugin_Handled;
