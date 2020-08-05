@@ -21,4 +21,6 @@ public Action Command_RRM(int client, int args)
 		PrintToServer("%s Initialized map restart.", CONSOLE_SM);
 		QPrintToChatAll("%s %s%s %sinitialized map restart.", CHAT_SM, CHAT_VALUE, sAdminName, CHAT_SUCCESS);
 	}
+
+	return Plugin_Handled;
 }

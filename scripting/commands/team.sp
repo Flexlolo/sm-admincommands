@@ -67,23 +67,26 @@ public Action Command_Team(int client, int args)
 
 							if (client)
 							{
-								QPrintToChat(client, "%s %sMoved %s%s %sto %s%s", 	CHAT_SM, CHAT_SUCCESS, 
-																					CHAT_VALUE, sName, CHAT_SUCCESS, 
-																					CHAT_VALUE, sTeam);
+								QPrintToChat(client, "%s %sMoved %s%s %sto %s%s", 	
+												CHAT_SM, CHAT_SUCCESS, 
+												CHAT_VALUE, sName, CHAT_SUCCESS, 
+												CHAT_VALUE, sTeam);
 
-								QPrintToChatAllExcept(client, "%s %s%s %smoved %s%s %sto %s%s", 	CHAT_SM, 
-																								CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																								CHAT_VALUE, sName, CHAT_SUCCESS, 
-																								CHAT_VALUE, sTeam);
+								QPrintToChatAllExcept(client, "%s %s%s %smoved %s%s %sto %s%s", 	
+														CHAT_SM, 
+														CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+														CHAT_VALUE, sName, CHAT_SUCCESS, 
+														CHAT_VALUE, sTeam);
 							}
 							else
 							{
 								PrintToServer("%s Moved %s to %s", CONSOLE_SM, sName, sTeam);
 
-								QPrintToChatAll("%s %s%s %smoved %s%s %s to %s%s", 	CHAT_SM, 
-																					CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
-																					CHAT_VALUE, sName, CHAT_SUCCESS, 
-																					CHAT_VALUE, sTeam);
+								QPrintToChatAll("%s %s%s %smoved %s%s %s to %s%s", 	
+													CHAT_SM, 
+													CHAT_VALUE, sAdminName, CHAT_SUCCESS, 
+													CHAT_VALUE, sName, CHAT_SUCCESS, 
+													CHAT_VALUE, sTeam);
 							}
 						}
 					}
